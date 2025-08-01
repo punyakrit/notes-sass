@@ -1,11 +1,17 @@
-"use client"
+
 import Link from "next/link";
 import React from "react";
 import { ModeToggle } from "./ThemeToggle";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import LoginButtons from "./LoginButtons";
 import { Button } from "./ui/button";
-import { LoginLink, RegisterLink } from "@kinde-oss/kinde-auth-nextjs";
+import Logout from "./Logout";
 
-function Navbar() {
+async function Navbar() {
+  const {isAuthenticated} = getKindeServerSession();
+  const isUserAuthenticated = await isAuthenticated();
+
+
   return (
     <nav className="border-b bg-background h-[10vh] flex items-center">
       <div className="container mx-auto px-4 flex items-center justify-between">
@@ -14,16 +20,12 @@ function Navbar() {
         </Link>
         <div className="flex items-center gap-x-5">
           <ModeToggle />
-          <div className="flex items-center gap-x-5">
-            <LoginLink>
-              <Button className=""> Sign In</Button>
-            </LoginLink>
-            <RegisterLink>
-              <Button variant={"secondary"} className="">
-                Sign Up
-              </Button>
-            </RegisterLink>
-          </div>
+          {isUserAuthenticated ? (
+            <Logout/>
+          ) : (
+            <LoginButtons/>
+          )}
+          
         </div>
       </div>
     </nav>
