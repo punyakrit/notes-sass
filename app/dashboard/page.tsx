@@ -1,9 +1,10 @@
+import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '@/components/ui/input-otp'
 import React from 'react'
 
 function page() {
   return (
     <div>
-      dashboard
+      Dashboard
     </div>
   )
 }
