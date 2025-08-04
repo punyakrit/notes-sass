@@ -1,7 +1,17 @@
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+export default async function Home() {
+  const { isAuthenticated} = getKindeServerSession();
+
+  const isUserAuthenticated = await isAuthenticated();
+
+  if(isUserAuthenticated) {
+    return redirect("/dashboard");
+  }
+  
   return (
     <section className="flex items-center justify-center h-[90vh] bg-background">
       <div className="relative items-center w-full px-5 py-12 mx-auto lg:px-16 max-w-7xl md:px-12">
