@@ -8,8 +8,9 @@ import Logout from "./Logout";
 import UserNav from "./UserNav";
 
 async function Navbar() {
-  const { isAuthenticated } = getKindeServerSession();
+  const { isAuthenticated, getUser } = getKindeServerSession();
   const isUserAuthenticated = await isAuthenticated();
+  const user = await getUser();
 
   return (
     <nav className="border-b bg-background h-[10vh] flex items-center">
@@ -20,7 +21,15 @@ async function Navbar() {
         </Link>
         <div className="flex items-center gap-x-5">
           <ModeToggle />
-          {isUserAuthenticated ? <UserNav /> : <LoginButtons />}
+          {isUserAuthenticated ? (
+            <UserNav
+              name={user?.given_name as string}
+              email={user?.email as string}
+              image={user?.picture as string}
+            />
+          ) : (
+            <LoginButtons />
+          )}
         </div>
       </div>
     </nav>
