@@ -21,6 +21,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { prisma } from "@/lib/db";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { Button } from "@/components/ui/button";
+import SubmitButton from "@/components/SubmitButton";
+import { revalidatePath } from "next/cache";
 
 async function getData({id}: {id: string}) {
   const respsone = await prisma.user.findUnique({
@@ -43,6 +46,20 @@ async function page() {
   const user = await getUser();
   const data = await getData({id: user?.id as string});
 
+  async function postData(fromData: FormData) {
+    "use server";
+    await prisma.user.update({
+      where:{
+        id: user?.id as string
+      },
+      data: {
+        name: fromData.get("name") as string || '',
+        colorScheme: fromData.get("color") as string || '',
+      }
+    })
+    revalidatePath('/', "layout")
+  }
+
   return (
     <div className="grid items-start gap-8">
       <div className="flex items-center justify-between px-2">
@@ -52,7 +69,7 @@ async function page() {
         </div>
       </div>
       <Card>
-        <form>
+        <form action={postData}>
           <CardHeader>
             <CardTitle>General Data</CardTitle>
             <CardDescription>
@@ -69,6 +86,7 @@ async function page() {
                   name="name"
                   id="name"
                   placeholder="Your name"
+                  defaultValue={data?.name ?? ''}
                 ></Input>
               </div>
               <div className="space-y-1">
@@ -80,11 +98,12 @@ async function page() {
                   id="email"
                   placeholder="Your email"
                   disabled
+                  defaultValue={data?.email ?? ''}
                 ></Input>
               </div>
               <div className="space-y-1">
                 <Label className="text-sm font-medium">Colour Scheme</Label>
-                <Select name="color">
+                <Select name="color" defaultValue={data?.colorScheme ?? ''}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a color scheme" />
                   </SelectTrigger>
@@ -104,6 +123,9 @@ async function page() {
               </div>
             </div>
           </CardContent>
+          <CardFooter className="mt-8">
+            <SubmitButton/>
+            </CardFooter>
         </form>
       </Card>
     </div>
