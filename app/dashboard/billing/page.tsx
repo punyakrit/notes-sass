@@ -1,6 +1,11 @@
+import { SubmitButtonWithState } from "@/components/SubmitButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { prisma } from "@/lib/db";
+import { getStripeSession } from "@/lib/stripe";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { CheckCircle2 } from "lucide-react";
+import { redirect } from "next/navigation";
 import React from "react";
 
 const featureItem = [
@@ -24,7 +29,61 @@ const featureItem = [
   },
 ];
 
-function page() {
+async function getData(userId: string) {
+  const response = await prisma.subscription.findUnique({
+    where:{
+      userId: userId
+    },
+    select:{
+      status: true,
+      user:{
+        select:{
+          stripeCustomerId: true,
+
+        }
+      }
+    }
+  })
+  return response
+}
+
+
+async function page() {
+  const { getUser } = await getKindeServerSession();
+  const user = await getUser();
+  const userId = user?.id as string;
+
+   if (!user || !user.id) {
+    return redirect("/");
+  }
+  const data = await getData(userId);
+
+
+  async function buyNow() {
+    "use server"
+
+    const dbUser = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        stripeCustomerId: true,
+      },
+    });
+
+    if (!dbUser?.stripeCustomerId) {
+      throw new Error("User not found");
+    }
+
+    const subscriptionUrl = await getStripeSession({
+      customerId : dbUser.stripeCustomerId as string,
+      priceId: process.env.STRIPE_PRICE_ID as string,
+      domainUrl: "http://localhost:3000"
+    })
+    return redirect(subscriptionUrl);
+  }
+
+
   return (
     <div className="max-w-md mx-auto space-y-4">
       <Card className="flex flex-col">
@@ -53,10 +112,8 @@ function page() {
               </li>
             ))}
           </ul>
-          <form>
-            <Button className="w-full" type="submit">
-                Buy Today
-            </Button>
+          <form action={buyNow}>
+            <SubmitButtonWithState />
           </form>
         </div>
       </Card>
