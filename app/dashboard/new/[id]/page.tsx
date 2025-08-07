@@ -9,10 +9,12 @@ import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import {  unstable_noStore as noStore } from "next/cache";
 
 import React from 'react'
 
 async function getData({userId, noteId}: {userId: string, noteId: string}) {
+  noStore();
     const data = await prisma.notes.findUnique({
         where: {
             id:noteId,
@@ -27,12 +29,12 @@ async function getData({userId, noteId}: {userId: string, noteId: string}) {
     return data;
 }
 
-async function page({params}: {params: {id: string}}) {
+async function page({params}: any) {
     const { getUser } = await getKindeServerSession();
     const user = await getUser();
 
-    const data = await getData({userId: user?.id as string, noteId: await(params.id)}); 
-
+    const param = await params
+    const data = await getData({userId: user?.id as string, noteId: await(param.id)}); 
 
     async function saveData(formData: FormData) {
         "use server";
@@ -44,7 +46,7 @@ async function page({params}: {params: {id: string}}) {
 
         await prisma.notes.update({
             where: {
-                id: params.id,
+                id: await(param.id),
                 userId: user?.id as string,
             },
             data: {

@@ -13,14 +13,31 @@ import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import React from "react";
+import {  unstable_noStore as noStore } from "next/cache";
 
 async function getData(userId: string) {
-  const data = await prisma.notes.findMany({
+  noStore();
+  // const data = await prisma.notes.findMany({
+  //   where: {
+  //     userId: userId,
+  //   },
+  //   orderBy: {
+  //     createdAt: "desc",
+  //   },
+  // });
+  // return data;
+
+  const data = await prisma.user.findUnique({
     where: {
-      userId: userId,
+      id: userId,
     },
-    orderBy: {
-      createdAt: "desc",
+    select: {
+      notes: true,
+      subscription: {
+        select: {
+          status: true,
+        },
+      },
     },
   });
   return data;
@@ -46,7 +63,6 @@ async function page() {
       },
     });
     revalidatePath("/dashboard");
-    return redirect("/dashboard");
   }
 
   return (
@@ -58,11 +74,17 @@ async function page() {
             Here you can create and see new notes{" "}
           </p>
         </div>
-        <Button asChild>
-          <Link href={"/dashboard/new"}>Create a new note</Link>
-        </Button>
+        {data?.subscription?.status === "active" ? (
+          <Button asChild>
+            <Link href={"/dashboard/new"}>Create a new note</Link>
+          </Button>
+        ) : (
+          <Button asChild>
+            <Link href={"/dashboard/billing"}>Create a new note</Link>
+          </Button>
+        )}
       </div>
-      {data.length < 1 ? (
+      {data?.notes.length == 0 ? (
         <div className="flex min-h-[400px] flex-col items-center justify-center  rounded-md border border-dashed  p-8 text-center animate-in fade-in-50">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
             <FileIcon className="w-10 h-10 text-primary" />
@@ -74,13 +96,19 @@ async function page() {
             You currently dont have any notes please create some notes to see
             them here
           </p>
-          <Button asChild>
-            <Link href={"/dashboard/new"}>Create a new note</Link>
-          </Button>
+          {data?.subscription?.status === "active" ? (
+            <Button asChild>
+              <Link href={"/dashboard/new"}>Create a new note</Link>
+            </Button>
+          ) : (
+            <Button asChild>
+              <Link href={"/dashboard/billing"}>Create a new note</Link>
+            </Button>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {data.map((note) => (
+          {data?.notes.map((note) => (
             <Card
               key={note.id}
               className="flex flex-row justify-between items-center p-4"

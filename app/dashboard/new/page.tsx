@@ -16,8 +16,11 @@ import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import React from "react";
+import {  unstable_noStore as noStore } from "next/cache";
+
 
 async function page() {
+  noStore();
   const { getUser } = await getKindeServerSession();
   const user = await getUser();
 

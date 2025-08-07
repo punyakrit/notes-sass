@@ -23,9 +23,10 @@ import { prisma } from "@/lib/db";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { Button } from "@/components/ui/button";
 import SubmitButton from "@/components/SubmitButton";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_noStore as noStore } from "next/cache";
 
 async function getData({id}: {id: string}) {
+  noStore();
   const respsone = await prisma.user.findUnique({
     where:{
       id : id
