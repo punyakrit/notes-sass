@@ -83,7 +83,7 @@ async function page() {
     const subscriptionUrl = await getStripeSession({
       customerId: dbUser.stripeCustomerId as string,
       priceId: process.env.STRIPE_PRICE_ID as string,
-      domainUrl: "http://localhost:3000",
+      domainUrl: "https://notes-sass.vercel.app",
     });
     return redirect(subscriptionUrl);
   }
@@ -92,7 +92,7 @@ async function page() {
     "use server";
     const session = await stripe.billingPortal.sessions.create({
       customer: data?.user.stripeCustomerId as string,
-      return_url: "http://localhost:3000/dashboard",
+      return_url: "https://notes-sass.vercel.app/dashboard",
     });
     return redirect(session.url);
   }
