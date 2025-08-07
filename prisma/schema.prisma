@@ -22,6 +22,7 @@ model User {
   colorScheme      String        @default("theme-purple")
   createdAt        DateTime      @default(now())
   subscription     Subscription?
+  notes            Notes[]
 }
 
 model Subscription {
@@ -35,4 +36,14 @@ model Subscription {
   updatedAt            DateTime @updatedAt
   userId               String   @unique
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notes {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

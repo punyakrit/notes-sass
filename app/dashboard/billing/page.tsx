@@ -1,8 +1,14 @@
 import { SubmitButtonWithState } from "@/components/SubmitButton";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { prisma } from "@/lib/db";
-import { getStripeSession } from "@/lib/stripe";
+import { getStripeSession, stripe } from "@/lib/stripe";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { CheckCircle2 } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -31,36 +37,33 @@ const featureItem = [
 
 async function getData(userId: string) {
   const response = await prisma.subscription.findUnique({
-    where:{
-      userId: userId
+    where: {
+      userId: userId,
     },
-    select:{
+    select: {
       status: true,
-      user:{
-        select:{
+      user: {
+        select: {
           stripeCustomerId: true,
-
-        }
-      }
-    }
-  })
-  return response
+        },
+      },
+    },
+  });
+  return response;
 }
-
 
 async function page() {
   const { getUser } = await getKindeServerSession();
   const user = await getUser();
   const userId = user?.id as string;
 
-   if (!user || !user.id) {
+  if (!user || !user.id) {
     return redirect("/");
   }
   const data = await getData(userId);
 
-
   async function buyNow() {
-    "use server"
+    "use server";
 
     const dbUser = await prisma.user.findUnique({
       where: {
@@ -76,13 +79,49 @@ async function page() {
     }
 
     const subscriptionUrl = await getStripeSession({
-      customerId : dbUser.stripeCustomerId as string,
+      customerId: dbUser.stripeCustomerId as string,
       priceId: process.env.STRIPE_PRICE_ID as string,
-      domainUrl: "http://localhost:3000"
-    })
+      domainUrl: "http://localhost:3000",
+    });
     return redirect(subscriptionUrl);
   }
 
+  async function launchPortal() {
+    "use server";
+    const session = await stripe.billingPortal.sessions.create({
+      customer: data?.user.stripeCustomerId as string,
+      return_url: "http://localhost:3000/dashboard",
+    });
+    return redirect(session.url);
+  }
+
+  if (data?.status === "active") {
+    return (
+      <div className="grid items-start gap-8">
+        <div className="flex items-center justify-between px-2">
+          <div className="grid gap-1">
+            <h1 className="text-3xl md:text-4xl">Subscription</h1>
+            <p className="text-lg text-muted-foreground">
+              Settings regarding your subscription
+            </p>
+          </div>
+        </div>
+        <Card className="w-full lg:w-2/3">
+          <CardHeader>
+            <CardTitle>Edit Subscription</CardTitle>
+            <CardDescription>
+              Click on the button below to edit your subscription.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={launchPortal}>
+              <Button type="submit">Launch portal</Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto space-y-4">
